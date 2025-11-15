@@ -1,34 +1,182 @@
+
 <!DOCTYPE html>
-<html dir="ltr" lang="en">
+<html lang="ja">
 <head>
-    <meta charset="utf-8">
-    <title>Allure Report</title>
-    <link rel="favicon" href="favicon.ico">
-    <link rel="stylesheet" type="text/css" href="styles.css">
-    <link rel="stylesheet" type="text/css" href="plugin/screen-diff/styles.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>テストレポート - 総合試験証跡管理</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f5f5f5;
+      color: #333;
+    }
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 30px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .header h1 {
+      font-size: 28px;
+      margin-bottom: 10px;
+    }
+    .header p {
+      opacity: 0.9;
+      font-size: 14px;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 30px 20px;
+    }
+    .section {
+      background: white;
+      border-radius: 8px;
+      padding: 25px;
+      margin-bottom: 25px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .section h2 {
+      font-size: 20px;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #667eea;
+      color: #667eea;
+    }
+    .report-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 15px;
+    }
+    .report-card {
+      background: #f9f9f9;
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+      padding: 20px;
+      transition: all 0.3s;
+      position: relative;
+    }
+    .report-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    .report-card.latest {
+      border: 2px solid #FF9800;
+      background: #FFF3E0;
+    }
+    .report-card.release {
+      border-left: 4px solid #4CAF50;
+    }
+    .report-card.test-cycle {
+      border-left: 4px solid #2196F3;
+    }
+    .report-card h3 {
+      font-size: 18px;
+      margin-bottom: 10px;
+      color: #333;
+    }
+    .report-card a {
+      color: #667eea;
+      text-decoration: none;
+      font-weight: 600;
+      display: inline-block;
+      margin-top: 10px;
+    }
+    .report-card a:hover {
+      text-decoration: underline;
+    }
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      margin-left: 8px;
+    }
+    .badge.latest { background: #FF9800; color: white; }
+    .badge.passed { background: #4CAF50; color: white; }
+    .badge.failed { background: #f44336; color: white; }
+    .stats {
+      display: flex;
+      gap: 15px;
+      margin-top: 12px;
+      font-size: 13px;
+    }
+    .stat {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .stat-icon {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+    .stat-icon.passed { background: #4CAF50; }
+    .stat-icon.failed { background: #f44336; }
+    .stat-icon.total { background: #2196F3; }
+    .meta {
+      font-size: 12px;
+      color: #666;
+      margin-top: 10px;
+    }
+    .empty-state {
+      text-align: center;
+      padding: 40px;
+      color: #999;
+    }
+  </style>
 </head>
 <body>
-    <div id="alert"></div>
-    <div id="content">
-        <span class="spinner">
-            <span class="spinner__circle"></span>
-        </span>
+  <div class="header">
+    <div class="container">
+      <h1>📊 テストレポート - 総合試験証跡管理</h1>
+      <p>プロジェクトの品質管理・証跡管理のための統合レポートシステム</p>
     </div>
-    <div id="popup"></div>
-    <script src="app.js"></script>
-    <script src="plugin/behaviors/index.js"></script>
-    <script src="plugin/packages/index.js"></script>
-    <script src="plugin/screen-diff/index.js"></script>
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-FVWC4GKEYS"></script>
-    <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
-        gtag('js', new Date());
-        gtag('config', 'G-FVWC4GKEYS', {
-          'allureVersion': 'dev',
-          'reportUuid': '346a0ed9-5353-4ac4-89ea-b1a4db4a5e1f',
-          'single_file': false
-        });
-    </script>
+  </div>
+
+  <div class="container">
+    <!-- 最新レポート -->
+    <div class="section">
+      <h2>🔥 最新のテストレポート</h2>
+      <div class="report-grid">
+        <div class="report-card latest">
+          <h3>最新ビルド</h3>
+          <a href="latest/" target="_blank">レポートを開く →</a>
+          <div class="meta">常に最新のテスト結果を表示</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 総合試験サイクル -->
+    <div class="section">
+      <h2>🎯 総合試験レポート（正式証跡）</h2>
+      <div class="empty-state">まだ総合試験レポートがありません</div>
+    </div>
+
+    <!-- リリースレポート -->
+    <div class="section">
+      <h2>🚀 リリースレポート</h2>
+      <div class="empty-state">まだリリースレポートがありません</div>
+    </div>
+
+    <!-- 開発ビルド（参考用） -->
+    <div class="section">
+      <h2>💻 開発ビルド（参考用・最新10件）</h2>
+      
+        <div class="report-grid">
+          
+            <div class="report-card">
+              <h3>Build #9</h3>
+              <a href="dev/9/" target="_blank">レポートを開く →</a>
+            </div>
+          
+        </div>
+      
+    </div>
+  </div>
 </body>
 </html>
