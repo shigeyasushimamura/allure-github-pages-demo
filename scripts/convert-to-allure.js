@@ -1,32 +1,32 @@
-import fs from "fs";
-import path from "path";
+const fs = require("fs");
+const path = require("path");
 
 const testResults = JSON.parse(fs.readFileSync("./test-results.json", "utf8"));
 const allureResultsDir = "./allure-results";
-const screenshotsDir = path.join(allureResultsDir, "screenshots");
+const logsDir = path.join(allureResultsDir, "logs");
 
 // allure-resultsディレクトリを作成
 if (!fs.existsSync(allureResultsDir)) {
   fs.mkdirSync(allureResultsDir, { recursive: true });
 }
 
-// スクリーンショットファイルを取得
-function getScreenshotsForTest(testName) {
-  if (!fs.existsSync(screenshotsDir)) {
+// ログファイルを取得
+function getLogsForTest(testName) {
+  if (!fs.existsSync(logsDir)) {
     return [];
   }
 
-  const files = fs.readdirSync(screenshotsDir);
+  const files = fs.readdirSync(logsDir);
   const testNameNormalized = testName.toLowerCase().replace(/[^a-z0-9]/g, "_");
 
   return files
     .filter(
-      (file) => file.includes(testNameNormalized) && file.endsWith(".png")
+      (file) => file.includes(testNameNormalized) && file.endsWith(".log")
     )
     .sort()
     .map((file) => ({
       filename: file,
-      path: path.join(screenshotsDir, file),
+      path: path.join(logsDir, file),
     }));
 }
 
@@ -38,26 +38,15 @@ testResults.testResults.forEach((testFile, fileIndex) => {
       .toLowerCase()
       .replace(/[^a-z0-9]/g, "_");
 
-    // スクリーンショットを取得
-    const screenshots = getScreenshotsForTest(testNameNormalized);
+    // ログファイルを取得
+    const logs = getLogsForTest(testNameNormalized);
 
-    // Allure形式のattachmentsを作成
-    const attachments = screenshots.map((screenshot, index) => {
-      const stepMatch = screenshot.filename.match(/_(\d+)_(.+?)_/);
-      const stepName = stepMatch
-        ? stepMatch[2].replace(/_/g, " ")
-        : `ステップ${index + 1}`;
-
-      return {
-        name: `📸 ${stepName}`,
-        source: screenshot.filename,
-        type: "image/png",
-      };
-    });
-
-    // テストタイプを判定（E2E or Unit）
-    const isE2E = testFile.name.includes("e2e");
-    const testType = isE2E ? "E2E Test" : "Unit Test";
+    // Allure形式のattachmentsを作成（ログファイル）
+    const attachments = logs.map((log) => ({
+      name: `📋 実行ログ`,
+      source: log.filename,
+      type: "text/plain",
+    }));
 
     const result = {
       uuid: uuid,
@@ -68,7 +57,6 @@ testResults.testResults.forEach((testFile, fileIndex) => {
         { name: "package", value: path.dirname(testFile.name) },
         { name: "testClass", value: test.ancestorTitles[0] || "Unknown" },
         { name: "testMethod", value: test.title },
-        { name: "tag", value: testType },
       ],
       links: [],
       name: test.title,
@@ -96,9 +84,7 @@ testResults.testResults.forEach((testFile, fileIndex) => {
 });
 
 console.log("✅ Converted test results to Allure format");
-const screenshotCount = fs.existsSync(screenshotsDir)
-  ? fs.readdirSync(screenshotsDir).length
-  : 0;
-if (screenshotCount > 0) {
-  console.log(`📸 Attached ${screenshotCount} screenshots`);
+const logCount = fs.existsSync(logsDir) ? fs.readdirSync(logsDir).length : 0;
+if (logCount > 0) {
+  console.log(`📋 Attached ${logCount} log files`);
 }
