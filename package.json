@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "vitest run",
+    "test:allure": "npm test && node scripts/convert-to-allure.js",
     "test:watch": "vitest",
     "test:ui": "vitest --ui"
   },
@@ -14,6 +15,7 @@
   "type": "module",
   "devDependencies": {
     "@vitest/ui": "^4.0.9",
+    "allure-vitest": "^3.4.2",
     "typescript": "^5.9.3",
     "vitest": "^4.0.9"
   }
