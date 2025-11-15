@@ -3,16 +3,23 @@ name: Run Tests and Deploy Allure Report
 on:
   push:
     branches: [main, develop]
+    tags:
+      - "v*" # タグpushを追加
   pull_request:
     branches: [main]
-  create:
-    tags:
-      - "v*"
   workflow_dispatch: # 手動実行（総合試験用）
     inputs:
-      test_cycle_name:
-        description: "総合試験サイクル名（例: 2025-01-ST1）"
+      environment:
+        description: "環境名（例: PROD, STG, DEV）"
         required: true
+        type: choice
+        options:
+          - PROD
+          - STG
+          - DEV
+      test_date:
+        description: "テスト実施日（YYYY-MM-DD形式、空欄で今日の日付）"
+        required: false
         type: string
 
 permissions:
@@ -90,17 +97,25 @@ jobs:
       - name: Determine report path
         if: always()
         id: report-path
-        env:
-          TEST_CYCLE_NAME: ${{ github.event.inputs.test_cycle_name }}
         run: |
           if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            # タグpush時はリリースレポート
             VERSION=${GITHUB_REF#refs/tags/}
             echo "path=releases/${VERSION}" >> $GITHUB_OUTPUT
             echo "type=release" >> $GITHUB_OUTPUT
           elif [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            echo "path=test-cycles/${TEST_CYCLE_NAME}" >> $GITHUB_OUTPUT
+            # 手動実行時は総合試験レポート
+            ENV="${{ github.event.inputs.environment }}"
+            DATE="${{ github.event.inputs.test_date }}"
+            if [ -z "$DATE" ]; then
+              DATE=$(date +%Y-%m-%d)
+            fi
+            TEST_CYCLE="${ENV}-${DATE}"
+            echo "path=test-cycles/${TEST_CYCLE}" >> $GITHUB_OUTPUT
             echo "type=test-cycle" >> $GITHUB_OUTPUT
+            echo "TEST_CYCLE_NAME=${TEST_CYCLE}" >> $GITHUB_ENV
           else
+            # 通常pushは開発ビルド
             echo "path=dev/${{ github.run_number }}" >> $GITHUB_OUTPUT
             echo "type=dev" >> $GITHUB_OUTPUT
           fi
@@ -125,8 +140,6 @@ jobs:
 
       - name: Create index page
         if: always()
-        env:
-          TEST_CYCLE_NAME: ${{ github.event.inputs.test_cycle_name }}
         run: node scripts/create-test-report-index.js
 
       - name: Deploy index page

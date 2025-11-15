@@ -38,22 +38,53 @@ function getExistingReports(type) {
 
   return fs
     .readdirSync(dir)
+    .filter((name) => {
+      // .gitやhidden filesを除外
+      if (name.startsWith(".")) return false;
+
+      // historyディレクトリを除外
+      if (name === "history") return false;
+
+      return true;
+    })
     .map((name) => {
       const statsPath = path.join(dir, name, "widgets", "summary.json");
       let stats = null;
+      let timestamp = null;
+
       if (fs.existsSync(statsPath)) {
         try {
-          stats = JSON.parse(fs.readFileSync(statsPath, "utf8"));
+          const content = JSON.parse(fs.readFileSync(statsPath, "utf8"));
+          stats = content;
+          // レポートのタイムスタンプを取得
+          const reportDataPath = path.join(dir, name, "data", "test-cases");
+          if (fs.existsSync(reportDataPath)) {
+            const files = fs.readdirSync(reportDataPath);
+            if (files.length > 0) {
+              const firstFile = path.join(reportDataPath, files[0]);
+              const stat = fs.statSync(firstFile);
+              timestamp = stat.mtime;
+            }
+          }
         } catch (e) {}
       }
-      return { name, stats };
+
+      return { name, stats, timestamp };
     })
-    .sort((a, b) => b.name.localeCompare(a.name));
+    .sort((a, b) => {
+      // タイムスタンプがあれば新しい順、なければ名前順
+      if (a.timestamp && b.timestamp) {
+        return b.timestamp - a.timestamp;
+      }
+      return b.name.localeCompare(a.name);
+    });
 }
 
 const releases = getExistingReports("releases");
 const testCycles = getExistingReports("test-cycles");
-const devBuilds = getExistingReports("dev").slice(0, 10); // 最新10件のみ
+
+// 開発ビルドは最新10件のみ、かつタグpushの場合は含めない
+let devBuilds = getExistingReports("dev").slice(0, 10);
 
 // メタデータを保存
 const metadata = {
@@ -68,6 +99,19 @@ const metadata = {
 };
 
 fs.writeFileSync("./report-metadata.json", JSON.stringify(metadata, null, 2));
+
+// 日付フォーマット関数
+function formatDate(isoString) {
+  if (!isoString) return "";
+  const date = new Date(isoString);
+  return date.toLocaleString("ja-JP", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
 
 // インデックスページHTML生成
 const html = `
@@ -200,6 +244,15 @@ const html = `
       padding: 40px;
       color: #999;
     }
+    .report-title {
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 5px;
+    }
+    .report-date {
+      font-size: 12px;
+      color: #999;
+    }
   </style>
 </head>
 <body>
@@ -239,15 +292,27 @@ const html = `
               const passRate =
                 total > 0 ? Math.round((passed / total) * 100) : 0;
 
+              // タイトルを環境名_日付形式にパース
+              const parts = report.name.split("-");
+              const env = parts[0] || "不明";
+              const date = parts.slice(1).join("-") || "";
+
               return `
               <div class="report-card test-cycle">
-                <h3>${report.name}
+                <div class="report-title">${env}_${date}
                   ${
                     passRate === 100
                       ? '<span class="badge passed">合格</span>'
                       : '<span class="badge failed">不合格</span>'
                   }
-                </h3>
+                </div>
+                ${
+                  report.timestamp
+                    ? `<div class="report-date">実施日時: ${formatDate(
+                        report.timestamp
+                      )}</div>`
+                    : ""
+                }
                 <a href="test-cycles/${
                   report.name
                 }/" target="_blank">レポートを開く →</a>
@@ -278,7 +343,7 @@ const html = `
             .join("")}
         </div>
       `
-          : '<div class="empty-state">まだ総合試験レポートがありません</div>'
+          : '<div class="empty-state">まだ総合試験レポートがありません<br><small>GitHub Actionsから手動実行で総合試験を実施してください</small></div>'
       }
     </div>
 
@@ -297,7 +362,14 @@ const html = `
 
               return `
               <div class="report-card release">
-                <h3>${report.name}</h3>
+                <div class="report-title">${report.name}</div>
+                ${
+                  report.timestamp
+                    ? `<div class="report-date">リリース日時: ${formatDate(
+                        report.timestamp
+                      )}</div>`
+                    : ""
+                }
                 <a href="releases/${
                   report.name
                 }/" target="_blank">レポートを開く →</a>
@@ -323,7 +395,7 @@ const html = `
             .join("")}
         </div>
       `
-          : '<div class="empty-state">まだリリースレポートがありません</div>'
+          : '<div class="empty-state">まだリリースレポートがありません<br><small>タグをpushするとリリースレポートが作成されます</small></div>'
       }
     </div>
 
@@ -338,7 +410,14 @@ const html = `
             .map(
               (report) => `
             <div class="report-card">
-              <h3>Build #${report.name}</h3>
+              <div class="report-title">Build #${report.name}</div>
+              ${
+                report.timestamp
+                  ? `<div class="report-date">${formatDate(
+                      report.timestamp
+                    )}</div>`
+                  : ""
+              }
               <a href="dev/${report.name}/" target="_blank">レポートを開く →</a>
             </div>
           `
