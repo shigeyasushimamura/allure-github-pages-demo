@@ -178,13 +178,13 @@ jobs:
               📋 実行ログ付きテストレポートが含まれています`
             })
       - name: Generate HTML report
-              if: always()
-              run: node scripts/generate-test-report-html.js
+        if: always()
+        run: node scripts/generate-test-report-html.js
 
-            - name: Upload HTML report as artifact
-              if: always()
-              uses: actions/upload-artifact@v4
-              with:
-                name: test-report-html-${{ github.run_number }}
-                path: test-report.html
-                retention-days: 90
+      - name: Upload HTML report as artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-report-html-${{ github.run_number }}
+          path: test-report.html
+          retention-days: 90
