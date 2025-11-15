@@ -32,6 +32,22 @@ jobs:
         run: npm test
         continue-on-error: true
 
+      - name: Install Java
+        uses: actions/setup-java@v4
+        if: always()
+        with:
+          distribution: "microsoft"
+          java-version: "17"
+
+      - name: Install Allure
+        if: always()
+        run: |
+          wget https://github.com/allure-framework/allure2/releases/download/2.25.0/allure-2.25.0.tgz
+          tar -zxf allure-2.25.0.tgz
+          sudo mv allure-2.25.0 /opt/allure
+          sudo ln -s /opt/allure/bin/allure /usr/bin/allure
+          allure --version
+
       - name: Get Allure history
         uses: actions/checkout@v4
         if: always()
@@ -40,20 +56,34 @@ jobs:
           ref: gh-pages
           path: gh-pages
 
-      - name: Build Allure Report
-        uses: simple-elf/allure-report-action@v1.7
+      - name: Copy Allure history
         if: always()
-        with:
-          allure_results: allure-results
-          allure_history: gh-pages/history
-          keep_reports: 20
+        continue-on-error: true
+        run: |
+          if [ -d "gh-pages/history" ]; then
+            mkdir -p allure-results
+            cp -r gh-pages/history allure-results/
+          fi
+
+      - name: Generate Allure Report
+        if: always()
+        run: |
+          allure generate allure-results -o allure-report --clean
+
+      - name: Copy history to report
+        if: always()
+        continue-on-error: true
+        run: |
+          if [ -d "gh-pages/history" ]; then
+            cp -r gh-pages/history allure-report/
+          fi
 
       - name: Deploy to GitHub Pages
         if: always()
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: allure-history
+          publish_dir: ./allure-report
           keep_files: false
 
       - name: Comment PR with report link
