@@ -1,5 +1,5 @@
-const fs = require("fs");
-const path = require("path");
+import fs from "fs";
+import path from "path";
 
 // 環境変数から情報取得
 const runNumber = process.env.GITHUB_RUN_NUMBER || "unknown";
