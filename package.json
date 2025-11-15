@@ -6,6 +6,7 @@
   "scripts": {
     "test": "vitest run",
     "test:allure": "npm test && node scripts/convert-to-allure.js",
+    "export:csv": "node scripts/export-test-results-with-logs.js",
     "test:watch": "vitest",
     "test:ui": "vitest --ui"
   },

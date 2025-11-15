@@ -177,3 +177,17 @@ jobs:
               
               📋 実行ログ付きテストレポートが含まれています`
             })
+      - name: Upload test results to Confluence
+              if: always() && (steps.report-path.outputs.type == 'test-cycle' || steps.report-path.outputs.type == 'release')
+              env:
+                CONFLUENCE_URL: ${{ secrets.CONFLUENCE_URL }}
+                CONFLUENCE_USER: ${{ secrets.CONFLUENCE_USER }}
+                CONFLUENCE_TOKEN: ${{ secrets.CONFLUENCE_TOKEN }}
+                CONFLUENCE_PAGE_ID: ${{ secrets.CONFLUENCE_PAGE_ID }}
+                REPORT_TYPE: ${{ steps.report-path.outputs.type }}
+                REPORT_PATH: ${{ steps.report-path.outputs.path }}
+                GITHUB_REPOSITORY: ${{ github.repository }}
+              run: |
+                npm install node-fetch@2
+                node scripts/upload-allure-to-confluence.js
+
