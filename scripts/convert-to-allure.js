@@ -3,31 +3,27 @@ import path from "path";
 
 const testResults = JSON.parse(fs.readFileSync("./test-results.json", "utf8"));
 const allureResultsDir = "./allure-results";
-const logsDir = path.join(allureResultsDir, "logs");
 
 // allure-resultsディレクトリを作成
 if (!fs.existsSync(allureResultsDir)) {
   fs.mkdirSync(allureResultsDir, { recursive: true });
 }
 
-// ログファイルを取得
+// ログファイルを取得（allure-results直下）
 function getLogsForTest(testName) {
-  if (!fs.existsSync(logsDir)) {
+  if (!fs.existsSync(allureResultsDir)) {
     return [];
   }
 
-  const files = fs.readdirSync(logsDir);
+  const files = fs.readdirSync(allureResultsDir);
   const testNameNormalized = testName.toLowerCase().replace(/[^a-z0-9]/g, "_");
 
   return files
     .filter(
-      (file) => file.includes(testNameNormalized) && file.endsWith(".log")
+      (file) => file.includes(testNameNormalized) && file.endsWith(".txt")
     )
     .sort()
-    .map((file) => ({
-      filename: file,
-      path: path.join(logsDir, file),
-    }));
+    .map((file) => file); // ファイル名のみ返す
 }
 
 // テスト結果をAllure形式に変換
@@ -42,9 +38,9 @@ testResults.testResults.forEach((testFile, fileIndex) => {
     const logs = getLogsForTest(testNameNormalized);
 
     // Allure形式のattachmentsを作成（ログファイル）
-    const attachments = logs.map((log) => ({
+    const attachments = logs.map((logFile) => ({
       name: `📋 実行ログ`,
-      source: log.filename,
+      source: logFile, // ファイル名のみ（allure-results直下にあるため）
       type: "text/plain",
     }));
 
@@ -84,7 +80,11 @@ testResults.testResults.forEach((testFile, fileIndex) => {
 });
 
 console.log("✅ Converted test results to Allure format");
-const logCount = fs.existsSync(logsDir) ? fs.readdirSync(logsDir).length : 0;
-if (logCount > 0) {
-  console.log(`📋 Attached ${logCount} log files`);
+
+// ログファイル数をカウント
+const logFiles = fs
+  .readdirSync(allureResultsDir)
+  .filter((f) => f.endsWith(".txt"));
+if (logFiles.length > 0) {
+  console.log(`📋 Attached ${logFiles.length} log files`);
 }

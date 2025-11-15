@@ -1,12 +1,12 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { Calculator } from "../src/calculator.js";
+import { Calculator } from "../src/calculator";
 import fs from "fs";
 import path from "path";
 
 describe("Calculator", () => {
   const calculator = new Calculator();
   let testLogs: string[] = [];
-  const logsDir = "./allure-results/logs";
+  const logsDir = "./allure-results"; // ← logs/ サブディレクトリではなく直下に
 
   beforeEach(() => {
     testLogs = [];
@@ -21,7 +21,7 @@ describe("Calculator", () => {
     if (testLogs.length > 0) {
       const testName = task.name.toLowerCase().replace(/[^a-z0-9]/g, "_");
       const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-      const logFileName = `${testName}_${timestamp}.log`;
+      const logFileName = `${testName}_${timestamp}.txt`; // ← .txt に変更
       const logFilePath = path.join(logsDir, logFileName);
 
       const logContent = testLogs.join("\n");
