@@ -1,0 +1,105 @@
+name: Run Tests and Deploy Allure Report
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  test-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests with Allure
+        run: npm test
+        continue-on-error: true
+
+      - name: Get Allure history
+        uses: actions/checkout@v4
+        if: always()
+        continue-on-error: true
+        with:
+          ref: gh-pages
+          path: gh-pages
+
+      - name: Copy Allure history
+        if: always()
+        continue-on-error: true
+        run: |
+          if [ -d "gh-pages/history" ]; then
+            mkdir -p allure-results
+            cp -r gh-pages/history allure-results/
+          fi
+
+      - name: Generate Allure Report
+        if: always()
+        run: npm run allure:generate
+
+      - name: Deploy to GitHub Pages
+        if: always()
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./allure-report
+          destination_dir: reports/${{ github.run_number }}
+          keep_files: true
+
+      - name: Create latest link
+        if: always()
+        run: |
+          mkdir -p latest-redirect
+          cat > latest-redirect/index.html << 'EOF'
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta http-equiv="refresh" content="0; url=../reports/${{ github.run_number }}/index.html">
+            <title>Redirecting to latest report...</title>
+          </head>
+          <body>
+            <p>Redirecting to <a href="../reports/${{ github.run_number }}/index.html">latest report</a>...</p>
+          </body>
+          </html>
+          EOF
+
+      - name: Deploy latest redirect
+        if: always()
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./latest-redirect
+          destination_dir: latest
+          keep_files: false
+
+      - name: Comment PR with report link
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## 📊 Test Report
+              
+              Allure Report: https://${context.repo.owner}.github.io/${context.repo.repo}/reports/${context.runNumber}/
+              
+              Run: ${context.runNumber}`
+            })

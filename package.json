@@ -1,0 +1,24 @@
+{
+  "name": "allure-github-pages-demo",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui",
+    "allure:generate": "allure generate allure-results -o allure-report --clean",
+    "allure:open": "allure open allure-report"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "devDependencies": {
+    "@vitest/ui": "^4.0.9",
+    "allure-commandline": "^2.34.1",
+    "allure-vitest": "^3.4.2",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.9"
+  }
+}
