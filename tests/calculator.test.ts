@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { Calculator } from "../src/calculator";
+import { Calculator } from "../src/calculator.js";
 import fs from "fs";
 import path from "path";
 
