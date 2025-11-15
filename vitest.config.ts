@@ -8,5 +8,6 @@ export default defineConfig({
     outputFile: {
       json: "./test-results.json",
     },
+    testTimeout: 30000, // E2Eテストは時間がかかるので延長
   },
 });

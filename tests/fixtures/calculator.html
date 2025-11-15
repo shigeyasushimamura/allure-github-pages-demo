@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Calculator</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 400px;
+        margin: 50px auto;
+        padding: 20px;
+      }
+      input {
+        width: 100%;
+        padding: 10px;
+        margin: 10px 0;
+        font-size: 18px;
+      }
+      button {
+        width: 100%;
+        padding: 15px;
+        margin: 5px 0;
+        font-size: 18px;
+        cursor: pointer;
+      }
+      #result {
+        font-size: 24px;
+        font-weight: bold;
+        margin-top: 20px;
+        padding: 20px;
+        background: #f0f0f0;
+        text-align: center;
+      }
+      .error-message {
+        color: red;
+        padding: 10px;
+        background: #ffe0e0;
+        margin-top: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>簡易電卓</h1>
+    <input type="number" id="num1" placeholder="数値1" />
+    <input type="number" id="num2" placeholder="数値2" />
+
+    <button id="add-button">足し算</button>
+    <button id="subtract-button">引き算</button>
+    <button id="multiply-button">掛け算</button>
+    <button id="divide-button">割り算</button>
+
+    <div id="result"></div>
+    <div class="error-message" style="display: none"></div>
+
+    <script>
+      function calculate(operation) {
+        const num1 = parseFloat(document.getElementById("num1").value);
+        const num2 = parseFloat(document.getElementById("num2").value);
+        const result = document.getElementById("result");
+        const error = document.querySelector(".error-message");
+
+        error.style.display = "none";
+
+        let output;
+        switch (operation) {
+          case "add":
+            output = num1 + num2;
+            break;
+          case "subtract":
+            output = num1 - num2;
+            break;
+          case "multiply":
+            output = num1 * num2;
+            break;
+          case "divide":
+            if (num2 === 0) {
+              error.textContent = "エラー: ゼロで割ることはできません";
+              error.style.display = "block";
+              result.textContent = "";
+              return;
+            }
+            output = num1 / num2;
+            break;
+        }
+
+        result.textContent = output;
+      }
+
+      document
+        .getElementById("add-button")
+        .addEventListener("click", () => calculate("add"));
+      document
+        .getElementById("subtract-button")
+        .addEventListener("click", () => calculate("subtract"));
+      document
+        .getElementById("multiply-button")
+        .addEventListener("click", () => calculate("multiply"));
+      document
+        .getElementById("divide-button")
+        .addEventListener("click", () => calculate("divide"));
+    </script>
+  </body>
+</html>

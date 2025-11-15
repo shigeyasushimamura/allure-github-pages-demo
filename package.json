@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "vitest run",
+    "test:e2e": "vitest run tests/e2e",
     "test:allure": "npm test && node scripts/convert-to-allure.js",
     "test:watch": "vitest",
     "test:ui": "vitest --ui"
@@ -14,8 +15,11 @@
   "license": "ISC",
   "type": "module",
   "devDependencies": {
+    "@types/node": "^24.10.1",
     "@vitest/ui": "^4.0.9",
+    "allure-js-commons": "^3.4.2",
     "allure-vitest": "^3.4.2",
+    "puppeteer": "^24.30.0",
     "typescript": "^5.9.3",
     "vitest": "^4.0.9"
   }
