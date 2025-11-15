@@ -28,7 +28,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run tests with Allure
+      - name: Run tests
         run: npm test
         continue-on-error: true
 
@@ -40,52 +40,20 @@ jobs:
           ref: gh-pages
           path: gh-pages
 
-      - name: Copy Allure history
+      - name: Build Allure Report
+        uses: simple-elf/allure-report-action@v1.7
         if: always()
-        continue-on-error: true
-        run: |
-          if [ -d "gh-pages/history" ]; then
-            mkdir -p allure-results
-            cp -r gh-pages/history allure-results/
-          fi
-
-      - name: Generate Allure Report
-        if: always()
-        run: npm run allure:generate
+        with:
+          allure_results: allure-results
+          allure_history: gh-pages/history
+          keep_reports: 20
 
       - name: Deploy to GitHub Pages
         if: always()
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./allure-report
-          destination_dir: reports/${{ github.run_number }}
-          keep_files: true
-
-      - name: Create latest link
-        if: always()
-        run: |
-          mkdir -p latest-redirect
-          cat > latest-redirect/index.html << 'EOF'
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <meta http-equiv="refresh" content="0; url=../reports/${{ github.run_number }}/index.html">
-            <title>Redirecting to latest report...</title>
-          </head>
-          <body>
-            <p>Redirecting to <a href="../reports/${{ github.run_number }}/index.html">latest report</a>...</p>
-          </body>
-          </html>
-          EOF
-
-      - name: Deploy latest redirect
-        if: always()
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./latest-redirect
-          destination_dir: latest
+          publish_dir: allure-history
           keep_files: false
 
       - name: Comment PR with report link
@@ -93,13 +61,16 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
+            const reportUrl = `https://${context.repo.owner}.github.io/${context.repo.repo}/`;
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
               body: `## 📊 Test Report
               
-              Allure Report: https://${context.repo.owner}.github.io/${context.repo.repo}/reports/${context.runNumber}/
+              Allure Report: ${reportUrl}
               
-              Run: ${context.runNumber}`
+              Build: ${context.runNumber}
+              
+              View the latest test results in the Allure Report.`
             })
